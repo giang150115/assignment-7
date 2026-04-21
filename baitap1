@@ -1,0 +1,126 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define TABLE_SIZE 10
+
+// Cấu trúc một nút trong danh sách liên kết
+typedef struct Node {
+    char name[50];
+    char phone[15];
+    struct Node* next;
+} Node;
+
+// Mảng các con trỏ (buckets)
+Node* buckets[TABLE_SIZE];
+
+// Hàm băm sử dụng công thức đa thức (nhân với 31)
+unsigned int hash(char *str) {
+    unsigned int hash_val = 0;
+    while (*str) {
+        hash_val = (hash_val * 31) + *str;
+        str++;
+    }
+    return hash_val % TABLE_SIZE;
+}
+
+// Chức năng 1: Thêm liên hệ mới
+void insert(char *name, char *phone) {
+    unsigned int index = hash(name);
+    
+    // Tạo node mới
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    strcpy(newNode->name, name);
+    strcpy(newNode->phone, phone);
+    
+    // Chèn vào đầu danh sách liên kết tại buckets[index] (Chaining)
+    newNode->next = buckets[index];
+    buckets[index] = newNode;
+}
+
+// Chức năng 2: Tìm kiếm theo tên
+void search(char *name) {
+    unsigned int index = hash(name);
+    Node* temp = buckets[index];
+    
+    while (temp != NULL) {
+        if (strcmp(temp->name, name) == 0) {
+            printf("Tim thay: %s - So dien thoai: %s\n", temp->name, temp->phone);
+            return;
+        }
+        temp = temp->next;
+    }
+    printf("Khong tim thay lien he: %s\n", name);
+}
+
+// Chức năng 3: Xóa liên hệ
+void delete(char *name) {
+    unsigned int index = hash(name);
+    Node *temp = buckets[index], *prev = NULL;
+
+    while (temp != NULL && strcmp(temp->name, name) != 0) {
+        prev = temp;
+        temp = temp->next;
+    }
+
+    if (temp == NULL) {
+        printf("Khong the xoa: Khong tim thay %s\n", name);
+        return;
+    }
+
+    if (prev == NULL) { // Node cần xóa nằm ở đầu bucket
+        buckets[index] = temp->next;
+    } else {
+        prev->next = temp->next;
+    }
+
+    free(temp);
+    printf(" Da xoa lien he: %s\n", name);
+}
+
+// Hàm in toàn bộ danh bạ (Gợi ý mở rộng)
+void displayAll() {
+    printf("\n--- DANH BA DIEN THOAI ---\n");
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        printf("Bucket %d: ", i);
+        Node* temp = buckets[i];
+        while (temp) {
+            printf("[%s: %s] -> ", temp->name, temp->phone);
+            temp = temp->next;
+        }
+        printf("NULL\n");
+    }
+    printf("--------------------------\n");
+}
+
+int main() {
+    // Khởi tạo bảng băm
+    for (int i = 0; i < TABLE_SIZE; i++) buckets[i] = NULL;
+
+    // 1. Nhập thử ít nhất 8 liên hệ
+    insert("An", "0912345");
+    insert("Binh", "0923456");
+    insert("Chinh", "0934567");
+    insert("Danh", "0945678");
+    insert("Giang", "0956789");
+    insert("Huong", "0967890");
+    insert("Lan", "0978901");
+    insert("Minh", "0989012");
+
+    displayAll();
+
+    // 2. Thực hiện tìm kiếm ít nhất 3 tên (1 tên không tồn tại)
+    printf("\n--- KIEM TRA TIM KIEM ---\n");
+    search("An");
+    search("Minh");
+    search("Xuan"); // Không tồn tại
+
+    // 3. Thực hiện xóa 2 liên hệ và in lại
+    printf("\n--- KIEM TRA XOA ---\n");
+    delete("Binh");
+    delete("Giang");
+
+    displayAll();
+
+    return 0;
+}
