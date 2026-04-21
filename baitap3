@@ -1,1 +1,101 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
+#define MAX 100
+
+typedef struct {
+    char name[50];
+    int priority;
+    int order; // Để xử lý trường hợp cùng mức ưu tiên (Gợi ý mở rộng)
+} Patient;
+
+Patient heap[MAX];
+int size = 0;
+int ticket_counter = 0; // Biến đếm thứ tự đến để đảm bảo công bằng
+
+void swap(Patient *a, Patient *b) {
+    Patient temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+// Hàm so sánh độ ưu tiên giữa hai bệnh nhân
+int compare(Patient p1, Patient p2) {
+    if (p1.priority > p2.priority) return 1;
+    if (p1.priority < p2.priority) return -1;
+    // Nếu cùng priority, ai đến trước (order nhỏ hơn) có ưu tiên cao hơn
+    return (p1.order < p2.order) ? 1 : -1;
+}
+
+// Chức năng 1: Thêm bệnh nhân (Heapify-up)
+void push(char *name, int priority) {
+    if (size >= MAX) return;
+    
+    Patient p;
+    strcpy(p.name, name);
+    p.priority = priority;
+    p.order = ++ticket_counter;
+
+    heap[size] = p;
+    int i = size;
+    size++;
+
+    // Heapify-up
+    while (i != 0 && compare(heap[i], heap[(i - 1) / 2]) > 0) {
+        swap(&heap[i], &heap[(i - 1) / 2]);
+        i = (i - 1) / 2;
+    }
+}
+
+// Chức năng 2: Lấy bệnh nhân ưu tiên nhất (Heapify-down)
+Patient pop() {
+    Patient root = heap[0];
+    heap[0] = heap[size - 1];
+    size--;
+
+    int i = 0;
+    while (2 * i + 1 < size) {
+        int largest = 2 * i + 1;
+        int right = 2 * i + 2;
+        
+        if (right < size && compare(heap[right], heap[largest]) > 0) {
+            largest = right;
+        }
+        
+        if (compare(heap[largest], heap[i]) > 0) {
+            swap(&heap[i], &heap[largest]);
+            i = largest;
+        } else break;
+    }
+    return root;
+}
+
+// Chức năng 3: Xem bệnh nhân đầu hàng đợi
+void peek() {
+    if (size > 0)
+        printf("Benh nhan dang cho: %s (Uu tien: %d)\n", heap[0].name, heap[0].priority);
+}
+
+int main() {
+    // 1. Nhập vào 5 bệnh nhân
+    push("Nguyen Van A", 2);
+    peek();
+    push("Tran Thi B", 5); // Cap cuu cao
+    peek();
+    push("Le Van C", 1);
+    peek();
+    push("Pham Van D", 5); // Cung priority voi B
+    peek();
+    push("Hoang Thi E", 3);
+    peek();
+
+    printf("\n--- THU TU GOI KHAM ---\n");
+    // 2. Lay lan luot tung benh nhan ra
+    while (size > 0) {
+        Patient p = pop();
+        printf("Moi benh nhan: %-15s | Muc uu tien: %d\n", p.name, p.priority);
+    }
+
+    return 0;
+}
